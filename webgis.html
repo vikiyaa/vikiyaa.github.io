@@ -1,0 +1,279 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <title>
+      Intro to MapView - Create a 2D map | Sample | ArcGIS API for JavaScript
+      4.23
+    </title>
+
+    <style>
+            html,
+            body,
+            #viewDiv {
+              padding: 0;
+              margin: 0;
+              height: 100%;
+              width: 100%;
+            }
+            #basemapGalleryDiv{
+              right:5px;
+              top:5px;
+            }
+      //body
+             body{
+                position:relative;
+            }
+
+            .top{
+              box-sizing: border-box;
+              height: 40px;
+              width: 100%;
+              background-color:rgba(240, 248, 255, 0.5);
+              color: black;
+              padding-left: 40px;
+              box-sizing:border-box;
+            }
+            .top b{
+              line-height:40px;
+              font-size: 20px;
+            }
+            .top i{
+              line-height:40px;
+              font-size: 10px;
+            }
+    </style>
+
+    <link
+      rel="stylesheet"
+      href="https://js.arcgis.com/4.23/esri/themes/light/main.css"
+    />
+    <script src="https://js.arcgis.com/4.23/"></script>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/FeatureLayer",
+        "esri/widgets/BasemapGallery",
+        "esri/widgets/Legend",
+        "esri/widgets/ScaleBar",
+        "esri/widgets/Search",
+        "esri/widgets/LayerList",
+        "esri/widgets/Home",
+        "esri/widgets/Measurement",
+        "esri/widgets/Compass",
+        "esri/widgets/Bookmarks",
+        "esri/widgets/Expand",
+        "esri/tasks/FindTask",
+        "esri/widgets/Editor",
+        "esri/popup/content/AttachmentsContent",
+        "esri/widgets/Print",
+        "esri/widgets/Track",
+        "esri/popup/content/TextContent"
+      ], (
+        Map,
+        MapView,
+        FeatureLayer,
+        BasemapGallery,
+        Legend,
+        ScaleBar,
+        Search,
+        LayerList,
+        Home,
+        Measurement,
+        Compass,
+        Bookmarks,
+        Expand,
+        FindTask,
+        Editor,
+        Print,
+        Track,
+        AttachmentsContent,
+        TextContent
+      ) => {
+        let features, editor;
+        //图层
+        const layer = new FeatureLayer({
+          // URL to the service
+          url: "https://www.geosceneonline.cn/server/rest/services/Hosted/%E7%A6%8F%E5%BB%BA%E5%86%9C%E6%9E%97%E5%A4%A7%E5%AD%A6%E5%85%AC%E5%85%B1%E4%BA%8B%E4%BB%B6%E8%A6%81%E7%B4%A0%E5%9B%BE%E5%B1%82/FeatureServer",
+          title: "Incidents"
+        });
+        const layer1 = new FeatureLayer({
+          // URL to the service
+          url: "https://www.geosceneonline.cn/server/rest/services/Hosted/22%E8%B7%AF/FeatureServer",
+          title: "22路公车路线"
+        });
+
+        //map
+        const map = new Map({
+          basemap: "topo"
+        });
+
+        //map.layers.add(layer);
+        map.addMany([layer, layer1]);
+
+        const view = new MapView({
+          container: "viewDiv",
+          map: map,
+          zoom: 13,
+          center: [119.27, 26.1] // longitude, latitude
+        });
+
+        //left
+        //图层列表
+        let layerList = new LayerList({
+          view: view
+        });
+
+        const llExpand = new Expand({
+          view: view,
+          content: layerList,
+          expanded: false
+        });
+        view.ui.add(llExpand, "top-left");
+
+        //指南针
+        let compass = new Compass({
+          view: view
+        });
+        // adds the compass to the top left corner of the MapView
+        view.ui.add(compass, "bottom-left");
+
+        //图例
+        let legend = new Legend(
+          {
+            view: view,
+            style: "card",
+            layerInfos: [
+              {
+                layer: layer,
+                title: "事件类型"
+              }
+            ]
+          },
+          "legend"
+        );
+        const lgExpand = new Expand({
+          view: view,
+          content: legend,
+          expanded: false
+        });
+        view.ui.add(lgExpand, "top-left");
+
+        //比例尺
+        let scaleBar = new ScaleBar({
+          view: view,
+          style: "ruler",
+          unit: "metric"
+        });
+        //Add widget to the bottom left corner of the view
+        view.ui.add(scaleBar, {
+          position: "bottom-left"
+        });
+
+        //right
+
+        //查询
+        const searchWidget = new Search({
+          view: view
+        });
+        // Adds the search widget below other elements in
+        // the top left corner of the view
+        view.ui.add(searchWidget, {
+          position: "top-right",
+          index: 2
+        });
+
+        //home键
+        let homeWidget = new Home({
+          view: view
+        });
+        // adds the home widget to the top left corner of the MapView
+        view.ui.add(homeWidget, "top-right");
+
+        //底图库
+        let basemapGallery = new BasemapGallery(
+          {
+            view: view
+          },
+          "basemapGallery"
+        );
+        basemapGallery.startup;
+        // Add widget to the top right corner of the view
+
+        const bgExpand = new Expand({
+          view: view,
+          content: basemapGallery,
+          expanded: false
+        });
+
+        // Add the widget to the top-right corner of the view
+        view.ui.add(bgExpand, "top-right");
+
+        //测量
+        const measurement = new Measurement({
+          view: view,
+          activeTool: "distance"
+        });
+
+        const measureExpand = new Expand({
+          view: view,
+          content: measurement,
+          expanded: false
+        });
+
+        view.ui.add(measureExpand, "top-right");
+
+        //书签
+        const bookmarks = new Bookmarks({
+          view: view,
+          // allows bookmarks to be added, edited, or deleted
+          editingEnabled: true
+        });
+        const bkExpand = new Expand({
+          view: view,
+          content: bookmarks,
+          expanded: false
+        });
+        view.ui.add(bkExpand, "top-right");
+
+        //Track
+        let track = new Track({
+          view: view
+          });
+       const trExpand = new Expand({
+          view: view,
+          content: track,
+          expanded: false
+        });
+        view.ui.add(trExpand, "top-right");
+        
+        //print
+        const print = new Print({
+          view: view,
+          // specify your own print service
+          printServiceUrl:
+            "https://utility.arcgisonline.com/arcgis/rest/services/Utilities/PrintingTools/GPServer/Export%20Web%20Map%20Task"
+        });
+        
+        
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="basemapGalleryDiv"></div>
+    <div class="top">
+      <b>福州22路公车周边事件</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <i>这是有关福州22路公交周边的一些事件</i>
+      <div id="searchdiv"></div>
+    </div>
+    <div id="viewDiv"></div>
+    <div id="other"></div>
+    <div id="final"></div>
+  </body>
+</html>
